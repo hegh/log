@@ -87,6 +87,12 @@ func Infof(format string, v ...interface{}) {
 	write(i, "info", format, v...)
 }
 
+// Printf is synonymous with Infof.
+// It exists for compatibility with the basic log package.
+func Printf(format string, v ...interface{}) {
+	write(i, "info", format, v...)
+}
+
 // Warnf writes log messages at WARN level.
 func Warnf(format string, v ...interface{}) {
 	write(w, "warn", format, v...)

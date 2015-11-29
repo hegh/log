@@ -13,11 +13,12 @@ Use like you would the existing logging package:
     }
 
 Redirect logging output by setting `log.Info`, `log.Warn`, `log.Error`, and
-`log.Fatal` to alternative io.Writer instances.
+`log.Fatal` to alternative `io.Writer` instances.
 
-Example of complex log redirection. This directs everything into
-progname.info.log, warning and above into progname.warn.log, error and above
-into progname.error.log, and fatal messages additionally get printed to stderr:
+Here is an example of complex log redirection. This directs everything into
+`progname.info.log`, warning and above into `progname.warn.log`, error and above
+into `progname.error.log`, and fatal messages additionally get printed to
+`stderr`:
 
     // Package preinit should be imported by any package that needs to log
     // anything during its initialization.

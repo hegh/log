@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	verbosity = flag.Int("verbosity", 0, "Logging verbosity level. Higher means more logs.")
+	Verbosity = flag.Int("verbosity", 0, "Logging verbosity level. Higher means more logs.")
 
 	// Info is where all INFO-level messages get written.
 	Info io.Writer = os.Stderr
@@ -55,7 +55,7 @@ func init() {
 	w = log.New(&rewriter{&Warn}, "W", flags)
 	e = log.New(&rewriter{&Error}, "E", flags)
 	f = log.New(&rewriter{&Error}, "F", flags)
-	Infof("Logging verbosity: %d", *verbosity)
+	Infof("Logging verbosity: %d", *Verbosity)
 }
 
 // Formats the message and writes it to the given logger.
@@ -72,7 +72,7 @@ func write(l *log.Logger, name, format string, v ...interface{}) string {
 
 // LoudEnough returns whether the verbosity is high enough to include messages of the given level.
 func LoudEnough(level int) bool {
-	return level <= *verbosity
+	return level <= *Verbosity
 }
 
 // V writes log messages at INFO level, but only if the configured verbosity is equal or greater than the provided level.

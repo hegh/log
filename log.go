@@ -55,7 +55,6 @@ func init() {
 	w = log.New(&rewriter{&Warn}, "W", flags)
 	e = log.New(&rewriter{&Error}, "E", flags)
 	f = log.New(&rewriter{&Error}, "F", flags)
-	Infof("Logging verbosity: %d", *Verbosity)
 }
 
 // Formats the message and writes it to the given logger.

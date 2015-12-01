@@ -54,7 +54,7 @@ func init() {
 	i = log.New(&rewriter{&Info}, "I", flags)
 	w = log.New(&rewriter{&Warn}, "W", flags)
 	e = log.New(&rewriter{&Error}, "E", flags)
-	f = log.New(&rewriter{&Error}, "F", flags)
+	f = log.New(&rewriter{&Fatal}, "F", flags)
 }
 
 // Formats the message and writes it to the given logger.

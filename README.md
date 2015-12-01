@@ -22,8 +22,8 @@ into `progname.error.log`, and fatal messages additionally get printed to
 `stderr`:
 
     // Package preinit should be imported by any package that needs to log
-    // anything during its initialization.
-    // Just `import _ "preinit"` and use log.XXX as normal.
+    // anything during initialization.
+    // Just `import _ "preinit"` in addition to `log` and use log.XXX as normal.
     package preinit
 
     import (

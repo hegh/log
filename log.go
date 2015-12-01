@@ -32,6 +32,13 @@ var (
 
 	// Fatal is where all FATAL-level messages get written.
 	Fatal io.Writer = os.Stderr
+
+	// Exit is the function to call after logging a Fatal message.
+	// If nil, is not called.
+	Exit func(int) = os.Exit
+
+	// ExitCode is the value to pass to the Exit function.
+	ExitCode = 1
 )
 
 // The rewriter type allows us to change the destination of written data without
@@ -111,5 +118,7 @@ func Panicf(format string, v ...interface{}) {
 // Fatalf writes log messages at FATAL level, and then calls os.Exit(1).
 func Fatalf(format string, v ...interface{}) {
 	write(f, "fatal", format, v...)
-	os.Exit(1)
+	if Exit != nil {
+		Exit(ExitCode)
+	}
 }

@@ -4,12 +4,13 @@ Provides logging levels (Info, Warning, Error, Fatal), verbosity,  and a couple
 of side effects (log-and-panic, log-and-terminate). Also makes redirecting log
 output easier.
 
-Use like you would the existing logging package:
+Use generally like you would the existing logging package:
     import "github.com/hegh/log"
 
     func f() {
       x := 5
       log.Infof("This is an info-level message. x = %v", x)
+      log.Printf("This is also info-level, provided for API compatibility")
     }
 
 Redirect logging output by setting `log.Info`, `log.Warn`, `log.Error`, and
@@ -47,14 +48,15 @@ into `progname.error.log`, and fatal messages additionally get printed to
         panic(err)
       }
       log.Info = i
-      log.Warn = io.MultiWriter(i, w)
-      log.Error = io.MultiWriter(i, w, e)
-      log.Fatal = io.MultiWriter(i, w, e, os.Stderr)
+      log.Warn = io.MultiWriter(log.Info, w)
+      log.Error = io.MultiWriter(log.Warn, e)
+      log.Fatal = io.MultiWriter(log.Error, os.Stderr)
     }
 
     // Close should be called prior to program termination.
     // Probably best to `defer preinit.Close()` in `func main()`.
     func Close() {
+      // Not a bad idea to check the errors from these and return them...
       i.Close()
       w.Close()
       e.Close()

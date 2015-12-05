@@ -46,6 +46,12 @@ func init() {
 	Root = New("")
 }
 
+// Logable is the interface required for writing data to the next lower level.
+type Logable interface {
+	// Output a log message. See log.Logger.Output for details.
+	Output(calldepth int, s string) error
+}
+
 // Logger provides an individually configurable logging instance.
 type Logger struct {
 	name string
@@ -54,7 +60,7 @@ type Logger struct {
 	// It defaults to the Verbosity flag.
 	Verbosity *int
 
-	i, w, e, f *log.Logger
+	i, w, e, f Logable
 
 	// Info is where all INFO-level messages get written.
 	Info io.Writer
@@ -105,7 +111,7 @@ func (l *Logger) SetVerbosity(v int) {
 // Returns the formatted message.
 // If there is an error writing to the given logger, writes a description
 // including the given message to the base logger.
-func write(l *log.Logger, depth int, name, format string, v ...interface{}) string {
+func write(l Logable, depth int, name, format string, v ...interface{}) string {
 	msg := fmt.Sprintf(format, v...)
 	if err := l.Output(depth, msg); err != nil {
 		log.Printf("Failed to write to %s logger: %v.\n  Message: %s", name, err, msg)

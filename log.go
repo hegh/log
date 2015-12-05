@@ -18,27 +18,18 @@ import (
 	"os"
 )
 
+const (
+	// Kept separate because these may diverge.
+	// Call depth when using the default calls to the Root Logger.
+	rootDepth = 3
+
+	// Call depth when directly calling log functions on a Logger.
+	logDepth = 3
+)
+
 var (
 	Verbosity = flag.Int("verbosity", 0, "Logging verbosity level. Higher means more logs.")
-
-	// Info is where all INFO-level messages get written.
-	Info io.Writer = os.Stderr
-
-	// Warn is where all WARN-level messages get written.
-	Warn io.Writer = os.Stderr
-
-	// Error is where all ERROR-level messages (including Panic) get written.
-	Error io.Writer = os.Stderr
-
-	// Fatal is where all FATAL-level messages get written.
-	Fatal io.Writer = os.Stderr
-
-	// Exit is the function to call after logging a Fatal message.
-	// If nil, is not called.
-	Exit func(int) = os.Exit
-
-	// ExitCode is the value to pass to the Exit function.
-	ExitCode = 1
+	Root      *Logger
 )
 
 // The rewriter type allows us to change the destination of written data without
@@ -51,74 +42,167 @@ func (w *rewriter) Write(p []byte) (int, error) {
 	return (*w.w).Write(p)
 }
 
-var (
-	// The loggers used internally.
-	i, w, e, f *log.Logger
-)
-
 func init() {
+	Root = New("")
+}
+
+// Logger provides an individually configurable logging instance.
+type Logger struct {
+	name string
+
+	// Verbosity indicates how "loud" this logger is.
+	// It defaults to the Verbosity flag.
+	Verbosity *int
+
+	i, w, e, f *log.Logger
+
+	// Info is where all INFO-level messages get written.
+	Info io.Writer
+
+	// Warn is where all WARN-level messages get written.
+	Warn io.Writer
+
+	// Error is where all ERROR-level messages (including Panic) get written.
+	Error io.Writer
+
+	// Fatal is where all FATAL-level messages get written.
+	Fatal io.Writer
+
+	// Exit is the function to call after logging a Fatal message.
+	// If nil, is not called.
+	Exit func()
+}
+
+// New returns a new Logger with the given name.
+func New(name string) *Logger {
+	l := &Logger{
+		name:      name,
+		Verbosity: Verbosity,
+		Info:      os.Stderr,
+		Warn:      os.Stderr,
+		Error:     os.Stderr,
+		Fatal:     os.Stderr,
+		Exit:      func() { os.Exit(1) },
+	}
 	flags := log.Ldate | log.Ltime | log.Lshortfile
-	i = log.New(&rewriter{&Info}, "I", flags)
-	w = log.New(&rewriter{&Warn}, "W", flags)
-	e = log.New(&rewriter{&Error}, "E", flags)
-	f = log.New(&rewriter{&Fatal}, "F", flags)
+	l.i = log.New(&rewriter{&l.Info}, "I", flags)
+	l.w = log.New(&rewriter{&l.Warn}, "W", flags)
+	l.e = log.New(&rewriter{&l.Error}, "E", flags)
+	l.f = log.New(&rewriter{&l.Fatal}, "F", flags)
+	return l
+}
+
+func (l *Logger) Name() string {
+	return l.name
+}
+
+// SetVerbosity is a convenience method to set the logging verbosity to a constant.
+func (l *Logger) SetVerbosity(v int) {
+	l.Verbosity = &v
 }
 
 // Formats the message and writes it to the given logger.
 // Returns the formatted message.
 // If there is an error writing to the given logger, writes a description
 // including the given message to the base logger.
-func write(l *log.Logger, name, format string, v ...interface{}) string {
+func write(l *log.Logger, depth int, name, format string, v ...interface{}) string {
 	msg := fmt.Sprintf(format, v...)
-	if err := l.Output(3, msg); err != nil {
+	if err := l.Output(depth, msg); err != nil {
 		log.Printf("Failed to write to %s logger: %v.\n  Message: %s", name, err, msg)
 	}
 	return msg
 }
 
 // LoudEnough returns whether the verbosity is high enough to include messages of the given level.
+func (l *Logger) LoudEnough(level int) bool {
+	return level <= *l.Verbosity
+}
+
+// LoudEnough returns whether the verbosity on the root logger is high enough to include messages of the given level.
 func LoudEnough(level int) bool {
-	return level <= *Verbosity
+	return Root.LoudEnough(level)
 }
 
 // V writes log messages at INFO level, but only if the configured verbosity is equal or greater than the provided level.
+func (l *Logger) V(level int, format string, v ...interface{}) {
+	if l.LoudEnough(level) {
+		write(l.i, logDepth, l.name+" info", format, v...)
+	}
+}
+
+// V writes log messages at INFO level to the root logger, but only if the configured verbosity is equal or greater than the provided level.
 func V(level int, format string, v ...interface{}) {
-	if LoudEnough(level) {
-		write(i, "info", format, v...)
+	if Root.LoudEnough(level) {
+		write(Root.i, rootDepth, Root.name+" info", format, v...)
 	}
 }
 
 // Infof writes log messages at INFO level.
+func (l *Logger) Infof(format string, v ...interface{}) {
+	write(l.i, logDepth, l.name+" info", format, v...)
+}
+
+// Infof writes log messages at INFO level to the root logger.
 func Infof(format string, v ...interface{}) {
-	write(i, "info", format, v...)
+	write(Root.i, rootDepth, Root.name+" info", format, v...)
+}
+
+// Printf is synonymous with Infof.
+// It exists for compatibility with the basic log package.
+func (l *Logger) Printf(format string, v ...interface{}) {
+	write(l.i, logDepth, l.name+" info", format, v...)
 }
 
 // Printf is synonymous with Infof.
 // It exists for compatibility with the basic log package.
 func Printf(format string, v ...interface{}) {
-	write(i, "info", format, v...)
+	write(Root.i, rootDepth, Root.name+" info", format, v...)
 }
 
 // Warnf writes log messages at WARN level.
+func (l *Logger) Warnf(format string, v ...interface{}) {
+	write(l.w, logDepth, l.name+" warn", format, v...)
+}
+
+// Warnf writes log messages at WARN level to the root logger.
 func Warnf(format string, v ...interface{}) {
-	write(w, "warn", format, v...)
+	write(Root.w, rootDepth, Root.name+" warn", format, v...)
 }
 
 // Errorf writes log messages at ERROR level.
+func (l *Logger) Errorf(format string, v ...interface{}) {
+	write(l.e, logDepth, l.name+" error", format, v...)
+}
+
+// Errorf writes log messages at ERROR level to the root logger.
 func Errorf(format string, v ...interface{}) {
-	write(e, "error", format, v...)
+	write(Root.e, rootDepth, Root.name+" error", format, v...)
 }
 
 // Panicf writes log messages at ERROR level, and then panics.
 // The panic parameter is an error with the formatted message.
-func Panicf(format string, v ...interface{}) {
-	panic(errors.New(write(e, "error", format, v...)))
+func (l *Logger) Panicf(format string, v ...interface{}) {
+	panic(errors.New(write(l.e, logDepth, l.name+" error", format, v...)))
 }
 
-// Fatalf writes log messages at FATAL level, and then calls os.Exit(1).
+// Panicf writes log messages at ERROR level to the root logger, and then panics.
+// The panic parameter is an error with the formatted message.
+func Panicf(format string, v ...interface{}) {
+	panic(errors.New(write(Root.e, rootDepth, Root.name+" error", format, v...)))
+}
+
+// Fatalf writes log messages at FATAL level, and then calls Exit.
+func (l *Logger) Fatalf(format string, v ...interface{}) {
+	write(l.f, logDepth, l.name+" fatal", format, v...)
+	if l.Exit != nil {
+		l.Exit()
+	}
+}
+
+// Fatalf writes log messages at FATAL level to the root logger, and then calls Exit.
 func Fatalf(format string, v ...interface{}) {
-	write(f, "fatal", format, v...)
-	if Exit != nil {
-		Exit(ExitCode)
+	write(Root.f, rootDepth, Root.name+" fatal", format, v...)
+	if Root.Exit != nil {
+		Root.Exit()
 	}
 }

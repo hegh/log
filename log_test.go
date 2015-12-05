@@ -28,12 +28,124 @@ func TestLoudEnough(t *testing.T) {
 	}
 }
 
+func TestCallDepth(t *testing.T) {
+	// Verifies we get log_test.go (and not log.go) for the file name of log messages.
+	il, wl, el, fl := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
+	Root.Info = il
+	Root.Warn = wl
+	Root.Error = el
+	Root.Fatal = fl
+
+	m := regexp.MustCompile(
+		`^.*log_test\.go.*
+$`)
+	*Verbosity = 1
+
+	// V
+	V(1, "Test")
+	if s := il.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for default V log.", s, m)
+	}
+
+	il.Truncate(0)
+	Root.V(1, "Test")
+	if s := il.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for Root.V log.", s, m)
+	}
+
+	// Infof
+	il.Truncate(0)
+	Infof("Test")
+	if s := il.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for default Infof log.", s, m)
+	}
+
+	il.Truncate(0)
+	Root.Infof("Test")
+	if s := il.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for Root.Infof log.", s, m)
+	}
+
+	// Printf
+	il.Truncate(0)
+	Printf("Test")
+	if s := il.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for default Printf log.", s, m)
+	}
+
+	il.Truncate(0)
+	Root.Printf("Test")
+	if s := il.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for Root.Printf log.", s, m)
+	}
+
+	// Warnf
+	Warnf("Test")
+	if s := wl.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for default Warnf log.", s, m)
+	}
+
+	wl.Truncate(0)
+	Root.Warnf("Test")
+	if s := wl.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for Root.Warnf log.", s, m)
+	}
+
+	// Errorf
+	Errorf("Test")
+	if s := el.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for default Errorf log.", s, m)
+	}
+
+	el.Truncate(0)
+	Root.Errorf("Test")
+	if s := el.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for Root.Errorf log.", s, m)
+	}
+
+	// Panicf
+	el.Truncate(0)
+	func() {
+		defer func() {
+			recover()
+		}()
+		Panicf("Test")
+	}()
+	if s := el.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for default Panicf log.", s, m)
+	}
+
+	el.Truncate(0)
+	func() {
+		defer func() {
+			recover()
+		}()
+		Root.Panicf("Test")
+	}()
+	if s := el.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for Root.Panicf log.", s, m)
+	}
+
+	// Fatalf
+	Root.Exit = nil
+	Fatalf("Test")
+	if s := fl.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for default Fatalf log.", s, m)
+	}
+
+	fl.Truncate(0)
+	Root.Fatalf("Test")
+	if s := fl.String(); !m.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v for Root.Fatalf log.", s, m)
+	}
+}
+
 func TestV(t *testing.T) {
 	il, wl, el, fl := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	Info = il
-	Warn = wl
-	Error = el
-	Fatal = fl
+	Root.Info = il
+	Root.Warn = wl
+	Root.Error = el
+	Root.Fatal = fl
 
 	*Verbosity = 1
 	V(1, "Test %s", "message")
@@ -54,10 +166,10 @@ func TestV(t *testing.T) {
 
 func TestInfo(t *testing.T) {
 	il, wl, el, fl := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	Info = il
-	Warn = wl
-	Error = el
-	Fatal = fl
+	Root.Info = il
+	Root.Warn = wl
+	Root.Error = el
+	Root.Fatal = fl
 
 	Infof("Test %s", "message")
 	if m := il.String(); !imatcher.MatchString(m) {
@@ -76,10 +188,10 @@ func TestInfo(t *testing.T) {
 
 func TestPrint(t *testing.T) {
 	il, wl, el, fl := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	Info = il
-	Warn = wl
-	Error = el
-	Fatal = fl
+	Root.Info = il
+	Root.Warn = wl
+	Root.Error = el
+	Root.Fatal = fl
 
 	Printf("Test %s", "message")
 	if m := il.String(); !imatcher.MatchString(m) {
@@ -98,10 +210,10 @@ func TestPrint(t *testing.T) {
 
 func TestWarn(t *testing.T) {
 	il, wl, el, fl := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	Info = il
-	Warn = wl
-	Error = el
-	Fatal = fl
+	Root.Info = il
+	Root.Warn = wl
+	Root.Error = el
+	Root.Fatal = fl
 
 	Warnf("Test %s", "message")
 	if m := il.String(); len(m) > 0 {
@@ -120,10 +232,10 @@ func TestWarn(t *testing.T) {
 
 func TestError(t *testing.T) {
 	il, wl, el, fl := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	Info = il
-	Warn = wl
-	Error = el
-	Fatal = fl
+	Root.Info = il
+	Root.Warn = wl
+	Root.Error = el
+	Root.Fatal = fl
 
 	Errorf("Test %s", "message")
 	if m := il.String(); len(m) > 0 {
@@ -142,10 +254,10 @@ func TestError(t *testing.T) {
 
 func TestPanic(t *testing.T) {
 	il, wl, el, fl := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	Info = il
-	Warn = wl
-	Error = el
-	Fatal = fl
+	Root.Info = il
+	Root.Warn = wl
+	Root.Error = el
+	Root.Fatal = fl
 
 	var err interface{}
 	done := make(chan struct{})
@@ -174,16 +286,15 @@ func TestPanic(t *testing.T) {
 
 func TestFatal(t *testing.T) {
 	il, wl, el, fl := new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer), new(bytes.Buffer)
-	Info = il
-	Warn = wl
-	Error = el
-	Fatal = fl
+	Root.Info = il
+	Root.Warn = wl
+	Root.Error = el
+	Root.Fatal = fl
 
-	code := -1
-	Exit = func(c int) {
-		code = c
+	called := false
+	Root.Exit = func() {
+		called = true
 	}
-	ExitCode = 5
 
 	Fatalf("Test %s", "message")
 	if m := il.String(); len(m) > 0 {
@@ -198,13 +309,10 @@ func TestFatal(t *testing.T) {
 	if m := fl.String(); !fmatcher.MatchString(m) {
 		t.Errorf("Got %v, want something matching %v from fatal log", m, fmatcher)
 	}
-	if code != 5 {
-		t.Errorf("Got %v, want 5 as the exit code from Fatalf", code)
-	}
-	if ExitCode != 5 {
-		t.Errorf("ExitCode changed away from 5 after calling Fatalf: %v", ExitCode)
+	if !called {
+		t.Errorf("The Exit function was not called from fatal log")
 	}
 
-	Exit = nil
+	Root.Exit = nil
 	Fatalf("The program should not crash here")
 }

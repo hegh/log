@@ -345,7 +345,7 @@ func TestNewTest(t *testing.T) {
 		err:   new(bytes.Buffer),
 		fatal: new(bytes.Buffer),
 	}
-	lg := NewTest(ft, "TestNewTest")
+	lg := NewTest(ft, "TestNewTest", true)
 
 	lg.Infof("Info log")
 	lg.Printf("Print log")
@@ -375,5 +375,13 @@ $`)
 $`)
 	if s := ft.fatal.String(); !fatal.MatchString(s) {
 		t.Errorf("Got %v, want something matching %v from fatal log", s, fatal)
+	}
+
+	// Reset and verify failOnError=false directs Errorf() to the info log.
+	ft.info.Truncate(0)
+	lg = NewTest(ft, "TestNewTest", false)
+	lg.Errorf("Error log")
+	if s := ft.err.String(); !err.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v from error log", s, err)
 	}
 }

@@ -123,14 +123,20 @@ type TestLogable interface {
 // NewTest returns a Logger intended for use in a test function.
 // Messages are logged to the test case, so they appear in the proper order with direct calls to t's logging.
 // Easiest use is for non-parallel tests; replace Root with an instance at the beginning of each test function.
-func NewTest(t TestLogable, name string) *Logger {
+// If `failOnError` is true, `Errorf` calls result in `t.Errorf`. Otherwise they call `t.Logf`.
+// A call to `Fatalf` will always result in `t.Fatalf` being called.
+func NewTest(t TestLogable, name string, failOnError bool) *Logger {
 	l := &Logger{
 		name:      name,
 		Verbosity: Verbosity,
 	}
 	l.i = testLog("I", t.Logf)
 	l.w = testLog("W", t.Logf)
-	l.e = testLog("E", t.Errorf)
+	if failOnError {
+		l.e = testLog("E", t.Errorf)
+	} else {
+		l.e = testLog("E", t.Logf)
+	}
 	l.f = testLog("F", t.Fatalf)
 	l.Infof("Beginning %v", name)
 	return l

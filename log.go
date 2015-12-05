@@ -98,6 +98,44 @@ func New(name string) *Logger {
 	return l
 }
 
+// A type that translates io.Writer.Write() calls into testing.T.Logf/Errorf/Fatalf()-like calls
+type testWriter struct {
+	f func(format string, v ...interface{})
+}
+
+func (t testWriter) Write(p []byte) (int, error) {
+	t.f("%s", p)
+	return len(p), nil
+}
+
+// Builds a log.Logger that will write to a testing.T.Logf-like function.
+func testLog(level string, f func(format string, v ...interface{})) *log.Logger {
+	return log.New(testWriter{f}, level, log.Lmicroseconds)
+}
+
+// TestLogable provides access to testing.T-type logging functions.
+type TestLogable interface {
+	Logf(format string, v ...interface{})
+	Errorf(format string, v ...interface{})
+	Fatalf(format string, v ...interface{})
+}
+
+// NewTest returns a Logger intended for use in a test function.
+// Messages are logged to the test case, so they appear in the proper order with direct calls to t's logging.
+// Easiest use is for non-parallel tests; replace Root with an instance at the beginning of each test function.
+func NewTest(t TestLogable, name string) *Logger {
+	l := &Logger{
+		name:      name,
+		Verbosity: Verbosity,
+	}
+	l.i = testLog("I", t.Logf)
+	l.w = testLog("W", t.Logf)
+	l.e = testLog("E", t.Errorf)
+	l.f = testLog("F", t.Fatalf)
+	l.Infof("Beginning %v", name)
+	return l
+}
+
 func (l *Logger) Name() string {
 	return l.name
 }

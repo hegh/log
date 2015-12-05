@@ -2,6 +2,7 @@ package log
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"testing"
 )
@@ -315,4 +316,64 @@ func TestFatal(t *testing.T) {
 
 	Root.Exit = nil
 	Fatalf("The program should not crash here")
+}
+
+type fakeTest struct {
+	TestLogable
+	info  *bytes.Buffer
+	err   *bytes.Buffer
+	fatal *bytes.Buffer
+}
+
+func (f fakeTest) Logf(format string, v ...interface{}) {
+	f.info.WriteString(fmt.Sprintf(format, v...))
+}
+
+func (f fakeTest) Errorf(format string, v ...interface{}) {
+	f.err.WriteString(fmt.Sprintf(format, v...))
+}
+
+func (f fakeTest) Fatalf(format string, v ...interface{}) {
+	f.fatal.WriteString(fmt.Sprintf(format, v...))
+}
+
+func TestNewTest(t *testing.T) {
+	// Verify NewTest() wires everything correctly for use with a test case.
+	// Also verifies most of the Logger.X methods.
+	ft := fakeTest{
+		info:  new(bytes.Buffer),
+		err:   new(bytes.Buffer),
+		fatal: new(bytes.Buffer),
+	}
+	lg := NewTest(ft, "TestNewTest")
+
+	lg.Infof("Info log")
+	lg.Printf("Print log")
+	lg.Warnf("Warn log")
+	lg.Errorf("Error log")
+	lg.Fatalf("Fatal log")
+
+	info := regexp.MustCompile(
+		`^I\d{2}:\d{2}:\d{2}\.\d{6} Beginning TestNewTest
+I.*Info log
+I.*Print log
+W.*Warn log
+$`)
+	if s := ft.info.String(); !info.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v from info log", s, info)
+	}
+
+	err := regexp.MustCompile(
+		`^E\d{2}:\d{2}:\d{2}\.\d{6} Error log
+$`)
+	if s := ft.err.String(); !err.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v from error log", s, err)
+	}
+
+	fatal := regexp.MustCompile(
+		`^F\d{2}:\d{2}:\d{2}\.\d{6} Fatal log
+$`)
+	if s := ft.fatal.String(); !fatal.MatchString(s) {
+		t.Errorf("Got %v, want something matching %v from fatal log", s, fatal)
+	}
 }

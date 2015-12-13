@@ -354,7 +354,7 @@ func TestNewTest(t *testing.T) {
 	lg.Fatalf("Fatal log")
 
 	info := regexp.MustCompile(
-		`^I\d{2}:\d{2}:\d{2}\.\d{6} Info log
+		`^I\d{2}:\d{2}:\d{2}\.\d{6} log_test.go:\d+: Info log
 I.*Print log
 W.*Warn log
 $`)
@@ -363,14 +363,14 @@ $`)
 	}
 
 	err := regexp.MustCompile(
-		`^E\d{2}:\d{2}:\d{2}\.\d{6} Error log
+		`^E\d{2}:\d{2}:\d{2}\.\d{6} log_test.go:\d+: Error log
 $`)
 	if s := ft.err.String(); !err.MatchString(s) {
 		t.Errorf("Got %v, want something matching %v from error log", s, err)
 	}
 
 	fatal := regexp.MustCompile(
-		`^F\d{2}:\d{2}:\d{2}\.\d{6} Fatal log
+		`^F\d{2}:\d{2}:\d{2}\.\d{6} log_test.go:\d+: Fatal log
 $`)
 	if s := ft.fatal.String(); !fatal.MatchString(s) {
 		t.Errorf("Got %v, want something matching %v from fatal log", s, fatal)

@@ -103,7 +103,7 @@ func (t testWriter) Write(p []byte) (int, error) {
 
 // Builds a log.Logger that will write to a testing.T.Logf-like function.
 func testLog(level string, f func(format string, v ...interface{})) *log.Logger {
-	return log.New(testWriter{f}, level, log.Lmicroseconds)
+	return log.New(testWriter{f}, level, log.Lmicroseconds|log.Lshortfile)
 }
 
 // TestLogable provides access to testing.T-type logging functions.

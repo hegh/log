@@ -132,7 +132,6 @@ func NewTest(t TestLogable, name string, failOnError bool) *Logger {
 		l.e = testLog("E", t.Logf)
 	}
 	l.f = testLog("F", t.Fatalf)
-	l.Infof("Beginning %v", name)
 	return l
 }
 

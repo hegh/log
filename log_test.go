@@ -354,8 +354,7 @@ func TestNewTest(t *testing.T) {
 	lg.Fatalf("Fatal log")
 
 	info := regexp.MustCompile(
-		`^I\d{2}:\d{2}:\d{2}\.\d{6} Beginning TestNewTest
-I.*Info log
+		`^I\d{2}:\d{2}:\d{2}\.\d{6} Info log
 I.*Print log
 W.*Warn log
 $`)

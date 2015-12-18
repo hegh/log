@@ -37,7 +37,6 @@ into `progname.error.log`, and fatal messages additionally get printed to
     package preinit
 
     import (
-      "flag"
       "io"
       "os"
     )
@@ -48,13 +47,13 @@ into `progname.error.log`, and fatal messages additionally get printed to
 
     func init() {
       var err error
-      if i, err = os.Create(flag.Arg(0) + ".info.log"); err != nil {
+      if i, err = os.Create(os.Args[0] + ".info.log"); err != nil {
         panic(err)
       }
-      if w, err = os.Create(flag.Arg(0) + ".warn.log"); err != nil {
+      if w, err = os.Create(os.Args[0] + ".warn.log"); err != nil {
         panic(err)
       }
-      if e, err  = os.Create(flag.Arg(0) + "error.log"); err != nil {
+      if e, err  = os.Create(os.Args[0] + "error.log"); err != nil {
         panic(err)
       }
       log.Root.Info = i

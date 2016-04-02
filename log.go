@@ -1,12 +1,12 @@
 // Package log provides a helpful wrapper around the standard log package.
 //
 // Anticipated basic usage:
-// log.Infof("This is an info level message")
-// log.Warnf("This is a warn level message")
-// log.Errorf("This is an error level message")
-// log.V(5, "This is info level, but will only show up if --verbosity >= 5")
-// log.Panicf("This message is error level, and also becomes a panic()")
-// log.Fatalf("This message is fatal level, and os.Exit(1) follows immediately")
+//     log.Infof("This is an info level message")
+//     log.Warnf("This is a warn level message")
+//     log.Errorf("This is an error level message")
+//     log.V(5, "This is info level, but will only show up if --verbosity >= 5")
+//     log.Panicf("This message is error level, and also becomes a panic()")
+//     log.Fatalf("This message is fatal level, and os.Exit(1) follows immediately")
 package log
 
 import (

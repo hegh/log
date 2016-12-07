@@ -1,3 +1,8 @@
+**This package is DEPRECATED. It is unwieldy and overly complicated. Instead, use
+the newer `ln` package from [github.com/hegh/basics](//github.com/hegh/basics),
+which has a more elegant API and a cleaner implementation.**
+
+
 A basic log package that sits on top of Go's existing log package, but also
 allows log redirection to unit test logs.
 
